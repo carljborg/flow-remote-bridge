@@ -23,3 +23,7 @@ Do not use this as a way around managed-desktop clipboard or data-exfiltration c
 ## Reporting vulnerabilities
 
 Use GitHub's private vulnerability reporting for this repository if enabled (Security → Advisories → Report a vulnerability). If that option is unavailable, open a minimal issue requesting a private reporting channel without including exploit details or sensitive material. There is no guaranteed response SLA.
+
+## Terminal semantics
+
+Apple Terminal's read-only terminal text area exposes scrollback, not an isolated editable draft. The terminal-specific receiver policy therefore permits output and caret changes, while retaining app/window/element identity and blocking selected text. It cannot detect shell command changes or distinguish typed input from process output inside the same pane. Normal editor/browser draft checks remain unchanged; other terminal applications are not implicitly allowlisted.

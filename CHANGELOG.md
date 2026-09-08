@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2 — 2026-09-08
+
+- Fix Apple Terminal dictation being rejected when background output changes its Accessibility scrollback value. Only its read-only terminal text area uses this policy; app/window/element identity checks remain and selected text blocks delivery.
+- Keep strict draft and selection checks for editors, browsers and Terminal's other fields. Document terminal-specific limitations instead of promising universal app support.
+- Add 12 pure field-policy regression cases to macOS CI and a metadata-only `inspect` operation.
+- Align the installer app version with the source release.
+
 ## 0.1.1 — 2026-09-08
 
 - Add delivery age and UTF-8 byte count to client status logs, without transcript contents or IDs.

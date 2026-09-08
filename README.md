@@ -8,7 +8,7 @@ This is by no means meant for wide distribution but I wanted to share in case an
 
 No extra dictation shortcut. No manual clipboard juggling. No generic clipboard watcher.
 
-> **Early public release — v0.1.1.** The original implementation was tested with real dictation from both macOS and Windows 11 Parsec clients into a Mac host. This repository packages that implementation with configurable paths, installers, tests, and documentation. It depends on Wispr Flow's **undocumented local history schema**, so Flow updates may require changes. It is not an official Wispr or Parsec integration.
+> **Early public release — v0.1.2.** The original implementation was tested with real dictation from both macOS and Windows 11 Parsec clients into a Mac host. This repository packages that implementation with configurable paths, installers, tests, and documentation. It depends on Wispr Flow's **undocumented local history schema**, so Flow updates may require changes. It is not an official Wispr or Parsec integration.
 
 ## What works today
 
@@ -98,7 +98,7 @@ Then connect with Parsec, click into a harmless text document on the remote Mac,
 
 - Only new, completed Flow records targeted at Parsec qualify.
 - The local Parsec app must be foreground, with a connection event indicating an active session.
-- The receiver checks the remote focus at arming and again before paste; changed fields or selections cancel when exposed by Accessibility.
+- The receiver checks the remote app, window and focused element at arming and again before paste. Editor draft or selection changes cancel when exposed by Accessibility. Apple Terminal’s read-only terminal surface has a specific policy: streaming output and caret offsets may change, but selected text blocks delivery.
 - ID journaling and one-use tokens prevent automatic replay of the same delivery. This is **at-most-once attempt behavior**, not guaranteed delivery.
 - The helper does not send an Enter key. **Multiline text pasted into a terminal can nevertheless execute commands**, depending on the terminal/shell. Use a text editor for initial testing.
 - The bridge does not record audio, read screenshots, or write transcript bodies to its own logs. Flow's own history and other clipboard managers are separate.
@@ -123,6 +123,7 @@ python3 -m unittest discover -s tests -v
 # On macOS; builds without installing or granting permissions:
 mkdir -p build
 xcrun swiftc -swift-version 5 -O receiver/Receiver.swift -o build/FlowRemoteReceiver
+build/FlowRemoteReceiver --test-field-policy
 xcrun swiftc clients/macos/Frontmost.swift -o build/frontmost
 ```
 

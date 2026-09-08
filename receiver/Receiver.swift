@@ -3,6 +3,52 @@ import ApplicationServices
 import Darwin
 import Foundation
 
+
+// Terminal's AXValue is its display/scrollback, not an editable input draft.
+// Keep this exception restricted to Apple's known terminal text surface.
+struct TextSelection: Equatable {
+  let location: Int
+  let length: Int
+}
+enum FieldPolicy {
+  static func isTerminal(bundle: String?, role: String?, valueWritable: Bool?) -> Bool {
+    bundle == "com.apple.Terminal" && role == "AXTextArea" && valueWritable == false
+  }
+  static func rejection(terminal: Bool, original: String?, current: String?,
+                        before: TextSelection?, after: TextSelection?) -> String? {
+    if terminal {
+      guard let before = before, let after = after else { return "terminal-selection-unavailable" }
+      return before.length == 0 && after.length == 0 ? nil : "terminal-selection-active"
+    }
+    if let original = original, let current = current, original != current { return "field-edited" }
+    if let before = before, let after = after, before != after { return "selection-changed" }
+    return nil
+  }
+}
+// Pure policy tests run without Accessibility, clipboard access, sockets or input.
+if CommandLine.arguments.contains("--test-field-policy") {
+  func check(_ passed: Bool, _ name: String) {
+    if !passed { fputs("FAIL: " + name + "\n", stderr); exit(1) }
+  }
+  let zero = TextSelection(location: 0, length: 0)
+  let moved = TextSelection(location: 50000, length: 0)
+  let selected = TextSelection(location: 2, length: 4)
+  check(FieldPolicy.isTerminal(bundle: "com.apple.Terminal", role: "AXTextArea", valueWritable: false), "Apple terminal surface")
+  check(!FieldPolicy.isTerminal(bundle: "other.editor", role: "AXTextArea", valueWritable: false), "other app strict")
+  check(!FieldPolicy.isTerminal(bundle: "com.apple.Terminal", role: "AXTextField", valueWritable: false), "terminal search field strict")
+  check(!FieldPolicy.isTerminal(bundle: "com.apple.Terminal", role: "AXTextArea", valueWritable: true), "writable field strict")
+  check(!FieldPolicy.isTerminal(bundle: "com.apple.Terminal", role: "AXTextArea", valueWritable: nil), "unknown writable state strict")
+  check(FieldPolicy.rejection(terminal: true, original: "old output", current: String(repeating: "streamed output\n", count: 5000), before: zero, after: moved) == nil, "streaming output and caret movement")
+  check(FieldPolicy.rejection(terminal: true, original: "", current: "", before: zero, after: selected) == "terminal-selection-active", "current terminal selection")
+  check(FieldPolicy.rejection(terminal: true, original: "", current: "", before: selected, after: zero) == "terminal-selection-active", "original terminal selection")
+  check(FieldPolicy.rejection(terminal: true, original: "", current: "", before: zero, after: nil) == "terminal-selection-unavailable", "unknown terminal selection")
+  check(FieldPolicy.rejection(terminal: false, original: "draft", current: "edited", before: zero, after: zero) == "field-edited", "edited draft remains protected")
+  check(FieldPolicy.rejection(terminal: false, original: "draft", current: "draft", before: zero, after: moved) == "selection-changed", "editor caret movement remains protected")
+  check(FieldPolicy.rejection(terminal: false, original: "draft", current: "draft", before: zero, after: zero) == nil, "unchanged editor")
+  print("12 field-policy cases passed")
+  exit(0)
+}
+
 let root = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(
   ".local/state/flow-remote-bridge")
 try FileManager.default.createDirectory(
@@ -17,7 +63,8 @@ struct Focus {
   let element: AXUIElement
   let window: AXUIElement?
   let originalValue: String?
-  let originalSelection: CFTypeRef?
+  let originalSelection: TextSelection?
+  let terminal: Bool
 }
 var focuses: [String: Focus] = [:]
 let journal = root.appendingPathComponent("consumed.json")
@@ -30,6 +77,19 @@ func attr(_ e: AXUIElement, _ name: String) -> CFTypeRef? {
 func elementAttr(_ e: AXUIElement, _ name: String) -> AXUIElement? {
   guard let v = attr(e, name), CFGetTypeID(v) == AXUIElementGetTypeID() else { return nil }
   return (v as! AXUIElement)
+}
+func selection(_ e: AXUIElement) -> TextSelection? {
+  guard let raw = attr(e, kAXSelectedTextRangeAttribute), CFGetTypeID(raw) == AXValueGetTypeID() else { return nil }
+  var range = CFRange()
+  guard AXValueGetValue((raw as! AXValue), .cfRange, &range), range.location >= 0, range.length >= 0 else { return nil }
+  return TextSelection(location: range.location, length: range.length)
+}
+func terminalSurface(_ pid: pid_t, _ e: AXUIElement) -> Bool {
+  var writable = DarwinBoolean(false)
+  let status = AXUIElementIsAttributeSettable(e, kAXValueAttribute as CFString, &writable)
+  return FieldPolicy.isTerminal(bundle: NSRunningApplication(processIdentifier: pid)?.bundleIdentifier,
+                                role: attr(e, kAXRoleAttribute) as? String,
+                                valueWritable: status == .success ? writable.boolValue : nil)
 }
 func focused() -> (pid_t, AXUIElement, AXUIElement?)? {
   guard let app = NSWorkspace.shared.frontmostApplication else { return nil }
@@ -55,6 +115,13 @@ func process(_ r: [String: Any]) -> [String: Any] {
   }
   guard AXIsProcessTrusted() else { return result("needs-accessibility") }
   guard !locked() else { return result("screen-locked") }
+  if r["op"] as? String == "inspect" {
+    guard let (pid, el, _) = focused() else { return result("no-focused-element") }
+    return result("ok", ["bundle": NSRunningApplication(processIdentifier: pid)?.bundleIdentifier ?? "unknown",
+                         "role": attr(el, kAXRoleAttribute) as? String ?? "unknown",
+                         "terminal_policy": terminalSurface(pid, el),
+                         "selection_length": selection(el)?.length ?? -1])
+  }
   guard let id = r["id"] as? String, UUID(uuidString: id) != nil else {
     return result("invalid-id")
   }
@@ -66,7 +133,7 @@ func process(_ r: [String: Any]) -> [String: Any] {
     focuses[key] = Focus(
       token: token, created: Date(), pid: pid, element: el, window: win,
       originalValue: attr(el, kAXValueAttribute) as? String,
-      originalSelection: attr(el, kAXSelectedTextRangeAttribute))
+      originalSelection: selection(el), terminal: terminalSurface(pid, el))
     focuses = focuses.filter { Date().timeIntervalSince($0.value.created) < 1800 }
     return result("armed", ["token": token])
   }
@@ -85,8 +152,9 @@ func process(_ r: [String: Any]) -> [String: Any] {
   if let enabled = attr(el, kAXEnabledAttribute) as? Bool, !enabled {
     return result("disabled-field")
   }
-  // Suppress a duplicate if Flow/Parsec already inserted the same suffix.
-  if let value = attr(el, kAXValueAttribute) as? String {
+  // Terminal scrollback can contain an old identical phrase, so suffix matching
+  // is only appropriate for normal editor fields. ID journaling covers both.
+  if !f.terminal, let value = attr(el, kAXValueAttribute) as? String {
     var range = CFRange()
     if let av = attr(el, kAXSelectedTextRangeAttribute), CFGetTypeID(av) == AXValueGetTypeID(),
       AXValueGetValue((av as! AXValue), .cfRange, &range), range.length == 0, range.location >= 0,
@@ -100,15 +168,11 @@ func process(_ r: [String: Any]) -> [String: Any] {
       }
     }
   }
-  if let original = f.originalValue, let current = attr(el, kAXValueAttribute) as? String,
-    original != current
-  {
-    return result("field-edited")
-  }
-  if let original = f.originalSelection, let current = attr(el, kAXSelectedTextRangeAttribute),
-    !CFEqual(original, current)
-  {
-    return result("selection-changed")
+  guard f.terminal == terminalSurface(pid, el) else { return result("field-type-changed") }
+  if let rejection = FieldPolicy.rejection(terminal: f.terminal,
+      original: f.originalValue, current: attr(el, kAXValueAttribute) as? String,
+      before: f.originalSelection, after: selection(el)) {
+    return result(rejection)
   }
   // Journal before emitting input: uncertain delivery is never automatically replayed.
   consumed[key] = Date().timeIntervalSince1970

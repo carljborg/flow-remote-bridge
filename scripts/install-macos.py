@@ -45,7 +45,7 @@ def main():
         (app / 'Contents/Info.plist').write_bytes(plistlib.dumps(dict(
             CFBundleExecutable='FlowRemoteReceiver', CFBundleIdentifier=label,
             CFBundleName='Flow Remote Bridge', CFBundlePackageType='APPL',
-            CFBundleShortVersionString='0.1.0', CFBundleVersion='1', LSUIElement=True)))
+            CFBundleShortVersionString='0.1.2', CFBundleVersion='3', LSUIElement=True)))
         run('codesign', '--force', '--sign', '-', app)
         destination = HOME / '.local/bin/flow-remote-submit'
         destination.parent.mkdir(parents=True, exist_ok=True)

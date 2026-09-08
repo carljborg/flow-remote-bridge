@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: mkdir -p build
       - run: xcrun swiftc -swift-version 5 -O receiver/Receiver.swift -o build/FlowRemoteReceiver
+      - run: build/FlowRemoteReceiver --test-field-policy
       - run: xcrun swiftc clients/macos/Frontmost.swift -o build/frontmost
       - run: bash -n scripts/uninstall-macos.sh
   windows:
