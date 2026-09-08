@@ -25,7 +25,7 @@ The Parsec adapter reads the tail of the client's log. The most recent connectio
 
 **This does not identify which remote host is connected.** The SSH destination is fixed in configuration. Current users must dedicate that Parsec client session to the same host. A production multi-host adapter should validate the remote peer identity as well as connection state.
 
-When arming, the Mac receiver retains the foreground process ID, focused Accessibility element and window, and available text value/selection. Before pasting it checks these again. Locked screens, recognized secure fields and disabled fields are rejected. Missing Accessibility data weakens what can be checked: an app that exposes a single large view may not distinguish all internal text fields. Focus changes between the final check and OS event delivery remain possible.
+When arming, the Mac receiver retains the foreground process ID, focused Accessibility element and window, and available text value/selection. Before pasting it checks these again. Apple Terminal’s read-only AXTextArea is a special case: its value is display/scrollback and can change as output streams, so value and caret-offset changes are allowed while app/window/element identity remains required. A text selection at arming or delivery blocks this terminal path. Other fields retain strict value and selection comparisons. Locked screens, recognized secure fields and disabled fields are rejected. Missing Accessibility data weakens what can be checked: an app that exposes a single large view may not distinguish all internal text fields. Focus changes between the final check and OS event delivery remain possible.
 
 ## Wire format
 
@@ -55,7 +55,7 @@ Response contains `status: armed` and a random `token`. Paste must supply the sa
 
 ## Delivery semantics
 
-Before emitting Cmd+V, the receiver records the client/ID pair in a persistent journal. Repeating that ID returns `already-consumed`. If the focused text/selection exposes the exact dictated suffix, it returns `already-inserted` instead of pasting again. That heuristic can also suppress an intentional repeated phrase; it is not a universal duplicate detector.
+Before emitting Cmd+V, the receiver records the client/ID pair in a persistent journal. Repeating that ID returns `already-consumed`. For nonterminal fields, if the focused text/selection exposes the exact dictated suffix, it returns `already-inserted` instead of pasting again. That heuristic can also suppress an intentional repeated phrase; it is not a universal duplicate detector.
 
 The clipboard is snapshotted in memory, temporarily replaced with plain text, and restored after 1.5 seconds **only if its change count has not changed**. This avoids overwriting a user's newer copy. No Enter event is emitted, but pasted newlines may still be interpreted by the destination application.
 
