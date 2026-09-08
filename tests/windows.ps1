@@ -22,3 +22,12 @@ foreach ($case in $cases) {
     if ($actual -ne $case.Expected) {throw 'Connection policy assertion failed'}
 }
 Write-Output 'Windows compilation and 6 connection-policy cases passed.'
+# Verify the Windows serializer preserves a long multilingual dictation, without
+# opening Flow's database or submitting input to a desktop.
+$json = New-Object System.Web.Script.Serialization.JavaScriptSerializer
+$body = (('Long dictation ' + [char]0x00E6 + [char]0x4E16 + [char]0x754C + "`n") * 2000) + 'final words '
+$wire = [Text.Encoding]::UTF8.GetBytes($json.Serialize(@{op='paste'; text=$body}))
+$decoded = $json.DeserializeObject([Text.Encoding]::UTF8.GetString($wire))
+if ($decoded.text -cne $body) {throw 'Long dictation JSON roundtrip failed'}
+if ([Text.Encoding]::UTF8.GetByteCount($body) -gt 65536) {throw 'Fixture exceeds receiver text limit'}
+Write-Output 'Long multilingual Windows payload roundtrip passed.'

@@ -52,6 +52,17 @@ class PolicyTests(unittest.TestCase):
         self.insert('unfinished', self.app, status='processing', pasted='partial')
         self.assertIsNone(formatted_body(history_rows(self.db, 0, [], self.app)[0], self.app))
 
+    def test_long_dictation_roundtrip(self):
+        # Well over the reported six-minute / 3,200-character case.
+        body = ('Long dictation æøå 👋 世界.\n' * 1500) + 'final words '
+        self.insert('long', self.app, pasted=body)
+        row = history_rows(self.db, 0, [], self.app)[0]
+        self.assertEqual(formatted_body(row, self.app), body)
+        import json
+        wire = json.dumps({'op': 'paste', 'text': body}, ensure_ascii=False).encode('utf-8')
+        self.assertEqual(json.loads(wire)['text'], body)
+        self.assertLessEqual(len(body.encode('utf-8')), 65536)
+
     def test_latest_parsec_event_wins(self):
         self.assertFalse(parsec_connected(''))
         self.assertTrue(parsec_connected('[I] Client Status received: 0\nordinary line'))

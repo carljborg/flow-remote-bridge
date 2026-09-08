@@ -107,7 +107,9 @@ def main():
                     del pending[number]  # Never replay an uncertain delivery.
                     if foreground():
                         reply = request(dict(op='paste', id=item['id'], token=item['token'], text=body))
-                        log('Delivery: ' + reply.get('status', 'unknown'))
+                        log('Delivery: ' + reply.get('status', 'unknown')
+                            + ' age_s=' + str(int(time.monotonic() - item['born']))
+                            + ' bytes=' + str(len(body.encode('utf-8'))))
             time.sleep(0.3)
         except Exception as error:
             pending.clear()

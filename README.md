@@ -4,9 +4,11 @@
 
 Flow can hear you, finish a transcription, and paste successfully into local apps—yet fail to insert anything into a remote desktop. Flow Remote Bridge handles that last step: it recognizes a new Flow dictation aimed at Parsec, sends the text over SSH, and performs a native **Cmd+V on the remote Mac**.
 
+This is by no means meant for wide distribution but I wanted to share in case anyone else might find this useful.
+
 No extra dictation shortcut. No manual clipboard juggling. No generic clipboard watcher.
 
-> **Early public release — v0.1.0.** The original implementation was tested with real dictation from both macOS and Windows 11 Parsec clients into a Mac host. This repository packages that implementation with configurable paths, installers, tests, and documentation. It depends on Wispr Flow's **undocumented local history schema**, so Flow updates may require changes. It is not an official Wispr or Parsec integration.
+> **Early public release — v0.1.1.** The original implementation was tested with real dictation from both macOS and Windows 11 Parsec clients into a Mac host. This repository packages that implementation with configurable paths, installers, tests, and documentation. It depends on Wispr Flow's **undocumented local history schema**, so Flow updates may require changes. It is not an official Wispr or Parsec integration.
 
 ## What works today
 

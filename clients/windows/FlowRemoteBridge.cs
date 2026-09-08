@@ -272,7 +272,7 @@ class FlowRemoteBridge
                                     { "text", item.Body }
                                 }
                                 );
-                                Log("Delivery: "+reply["status"]);
+                                Log("Delivery: "+reply["status"]+" age_s="+(int)(DateTime.UtcNow-item.Born).TotalSeconds+" bytes="+Encoding.UTF8.GetByteCount(item.Body));
                             }
                         }
                     }

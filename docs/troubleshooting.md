@@ -28,3 +28,11 @@ This bridge inserts on the Mac host; it does not fix ordinary Parsec keyboard ma
 ## Reporting a problem
 
 Include OS versions, Flow/Parsec versions, whether a safe manual paste works, health status, and redacted status-only watcher logs. State whether this is a clean public-package installation or a modified adapter. Never post dictation text, real Flow databases, screenshots containing private work, SSH material, authentication tokens or full app logs without reviewing them.
+
+## A long dictation fails but a short one works
+
+Check the status log before assuming a length limit. The watcher allows up to 25 minutes of pending dictation and the receiver accepts up to 64 KiB of UTF-8 text. `field-edited` means the destination's Accessibility value changed between arming and delivery; `selection-changed` means its selection changed. Neither indicates a transcript-size error. Longer recording provides more time for these changes to happen.
+
+In the original deployment, a roughly six-minute dictation with about 3,200 characters was rejected as `field-edited`, well below both limits. The logs establish the rejection reason, but do not establish why the destination changed. A terminal can expose changing output as its Accessibility value, whereas an editor usually exposes the editable draft. Keep that distinction in mind when diagnosing a target.
+
+Do not solve this by automatically rearming or removing all focus checks: that can paste into a different task or repeat text. Use the deliberate manual paste fallback while investigating. Delivery attempts are not retried automatically.
