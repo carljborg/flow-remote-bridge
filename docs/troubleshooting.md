@@ -10,6 +10,7 @@ Start with a disposable text document. Don't debug by pasting commands into a te
 | Windows health prints nothing | Stop/disable the watcher task first; its mutex prevents a second instance, including health mode. Check redirected stderr if config is invalid. |
 | Waiting for database | Run Flow locally and ensure local history is available. Enterprise/“Never store” settings may make this approach unsuitable. |
 | `Paused: OperationalError` / database query failure | Flow may have changed schema or reset its DB. Stop the watcher, inspect schema metadata locally, update if needed, restart. Never post the database publicly. |
+| Pending after minimizing Parsec | Return to the connected Parsec client within 25 minutes of arming. The original remote field must still pass validation. A dictation first observed outside Parsec is not armed. |
 | No new log activity | Verify Parsec is foreground and connected, and Flow's target app identifier still matches. Old history and retries of old records are intentionally ignored. |
 | `no-focused-element` | The destination app doesn't expose a focused Accessibility element. Try TextEdit to isolate app support. |
 | `focus-changed`, `field-edited`, `selection-changed` | The target changed during dictation, or the app exposes a changing composite element. Keep focus stable; don't weaken guards globally. |

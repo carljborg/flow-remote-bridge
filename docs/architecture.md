@@ -21,6 +21,8 @@ A maximum of 64 pending dictations bounds work. Pending entries expire after 25 
 
 ## Connection and focus checks
 
+An already-armed row remains pending while Parsec is not foreground/connected. It is reconsidered on return, without creating a new receiver token or extending the original 25-minute client expiry. This also covers completion while away. A final foreground check precedes consuming the pending row and attempting delivery; an uncertain attempt is never retried. App-mismatched rows still cancel, and fresh dictations first observed outside Parsec are not armed. Watcher restart excludes old history rather than restoring pending text.
+
 The Parsec adapter reads the tail of the client's log. The most recent connection-status or startup event must end with `Client Status received: 0`. It also checks the native foreground app/process.
 
 **This does not identify which remote host is connected.** The SSH destination is fixed in configuration. Current users must dedicate that Parsec client session to the same host. A production multi-host adapter should validate the remote peer identity as well as connection state.

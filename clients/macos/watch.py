@@ -8,7 +8,7 @@ import sqlite3
 import subprocess
 import time
 
-from policy import formatted_body, history_rows, parsec_connected
+from policy import formatted_body, history_rows, parsec_connected, pending_action
 
 
 def log(message):
@@ -90,12 +90,15 @@ def main():
                 item = pending.get(number)
                 if not item:
                     continue
-                if time.monotonic() - item['born'] > 1500 or not foreground():
+                action = pending_action(time.monotonic() - item['born'], foreground())
+                if action == 'expire':
                     del pending[number]
-                    log('Cancelled: expired or focus left Parsec')
+                    log('Cancelled: expired')
                     continue
                 if row['app'] and row['app'] != app_id:
                     del pending[number]
+                    continue
+                if action == 'pause':
                     continue
                 body = formatted_body(row, app_id)
                 if body:
@@ -104,8 +107,8 @@ def main():
                         continue
                     if time.monotonic() - item['stable'] < 0.7:
                         continue
-                    del pending[number]  # Never replay an uncertain delivery.
                     if foreground():
+                        del pending[number]  # Consume only when attempting delivery; never retry.
                         reply = request(dict(op='paste', id=item['id'], token=item['token'], text=body))
                         log('Delivery: ' + reply.get('status', 'unknown')
                             + ' age_s=' + str(int(time.monotonic() - item['born']))

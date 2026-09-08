@@ -22,3 +22,10 @@ def formatted_body(row, app_id):
     if row['app'] == app_id and row['status'] == 'formatted' and row['body']:
         return row['body']
     return None
+
+
+def pending_action(age_seconds, foreground):
+    """Keep an armed target while away; never renew its original expiry."""
+    if age_seconds > 1500:
+        return 'expire'
+    return 'ready' if foreground else 'pause'

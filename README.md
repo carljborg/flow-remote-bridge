@@ -90,14 +90,14 @@ Enable-ScheduledTask -TaskName 'Flow Remote Bridge'
 Start-ScheduledTask -TaskName 'Flow Remote Bridge'
 ```
 
-Then connect with Parsec, click into a harmless text document on the remote Mac, and dictate normally. Keep that target focused until the text arrives. Test a short phrase first, then punctuation, non-English text, and a second dictation.
+Then connect with Parsec, click into a harmless text document on the remote Mac, and dictate normally. Keep the remote target unchanged. You may temporarily minimize Parsec and return; pending dictation waits for you. Test a short phrase first, then punctuation, non-English text, and a second dictation.
 
 **Read the [complete setup and uninstall guide](docs/setup.md)** for SSH verification, configuration, health checks, autostart, logs, and updates.
 
 ## Safeguards and limits
 
 - Only new, completed Flow records targeted at Parsec qualify.
-- The local Parsec app must be foreground, with a connection event indicating an active session.
+- The local Parsec app must be connected and foreground when arming and delivering. Already-armed dictation pauses while you switch away; returning within 25 minutes of arming resumes delivery only if the original remote destination still passes validation. It never pastes while you remain in another local app.
 - The receiver checks the remote app, window and focused element at arming and again before paste. Editor draft or selection changes cancel when exposed by Accessibility. Apple Terminal’s read-only terminal surface has a specific policy: streaming output and caret offsets may change, but selected text blocks delivery.
 - ID journaling and one-use tokens prevent automatic replay of the same delivery. This is **at-most-once attempt behavior**, not guaranteed delivery.
 - The helper does not send an Enter key. **Multiline text pasted into a terminal can nevertheless execute commands**, depending on the terminal/shell. Use a text editor for initial testing.

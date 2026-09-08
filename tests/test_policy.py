@@ -4,7 +4,7 @@ from pathlib import Path
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'clients/macos'))
-from policy import formatted_body, history_rows, parsec_connected
+from policy import formatted_body, history_rows, parsec_connected, pending_action
 
 
 class PolicyTests(unittest.TestCase):
@@ -20,6 +20,20 @@ class PolicyTests(unittest.TestCase):
     def insert(self, ident, app, status='formatted', pasted='', formatted=''):
         return self.db.execute('INSERT INTO History VALUES(?,?,?,?,?)',
                                (ident, status, app, pasted, formatted)).lastrowid
+
+    def test_pause_return_and_expiry(self):
+        # A completed row remains queryable after the fresh-row watermark advances.
+        row_id = self.insert('away', self.app, pasted='complete while away')
+        pending = {row_id}
+        for age in (1, 30, 90):
+            self.assertEqual(pending_action(age, False), 'pause')
+            self.assertEqual(len(history_rows(self.db, row_id, pending, self.app)), 1)
+        self.assertEqual(pending_action(91, True), 'ready')
+        pending.remove(row_id)  # One attempted delivery consumes the item.
+        self.assertEqual(history_rows(self.db, row_id, pending, self.app), [])
+        for foreground in (False, True):
+            self.assertEqual(pending_action(1501, foreground), 'expire')
+        self.assertEqual(pending_action(1500, True), 'ready')
 
     def test_old_history_excluded(self):
         old = self.insert('old', self.app, pasted='old text')

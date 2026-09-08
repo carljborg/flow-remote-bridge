@@ -105,7 +105,7 @@ Run `--health` while the watcher task is stopped, because its single-instance mu
 3. Open a disposable text document on the remote Mac; avoid terminals for this test.
 4. Dictate a short phrase with local Flow. Keep Parsec and the remote text field focused until it arrives.
 5. Repeat with punctuation and Unicode. Verify each phrase appears once.
-6. Change focus during a dictation; verify the bridge cancels rather than following focus into another field.
+6. Minimize Parsec during an armed dictation; verify no remote paste while away, then return to the original unchanged field and verify one paste. Separately change the remote destination; verify delivery is rejected rather than following focus.
 7. Restart the watcher. Confirm old dictations do not reappear.
 
 The host may be physically headless if its existing remote desktop works. A working GUI login and Accessibility context are still required.

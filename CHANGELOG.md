@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.3 — Pause dictation while away from Parsec
+
+- macOS and Windows keep already-armed dictations pending when Parsec loses foreground focus; return within 25 minutes of arming to attempt delivery to the original validated Mac field.
+- Completed text remains pending while away. Final foreground-check failure no longer discards it. No background paste, destination rearming, expiry renewal, or retry of uncertain delivery.
+- Existing receiver field/selection safeguards remain unchanged. Client restart discards pending history as before.
+- Added pause/return/expiry regression coverage on both platforms.
+
+
 ## 0.1.2 — 2026-09-08
 
 - Fix Apple Terminal dictation being rejected when background output changes its Accessibility scrollback value. Only its read-only terminal text area uses this policy; app/window/element identity checks remain and selected text blocks delivery.

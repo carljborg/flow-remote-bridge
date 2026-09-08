@@ -31,3 +31,18 @@ $decoded = $json.DeserializeObject([Text.Encoding]::UTF8.GetString($wire))
 if ($decoded.text -cne $body) {throw 'Long dictation JSON roundtrip failed'}
 if ([Text.Encoding]::UTF8.GetByteCount($body) -gt 65536) {throw 'Fixture exceeds receiver text limit'}
 Write-Output 'Long multilingual Windows payload roundtrip passed.'
+
+$pendingMethod = $type.GetMethod('PendingAction', [Reflection.BindingFlags]'NonPublic,Static')
+foreach ($case in @(
+    @{Age=1.0; Foreground=$false; Expected='pause'},
+    @{Age=90.0; Foreground=$false; Expected='pause'},
+    @{Age=91.0; Foreground=$true; Expected='ready'},
+    @{Age=1500.0; Foreground=$true; Expected='ready'},
+    @{Age=1501.0; Foreground=$false; Expected='expire'},
+    @{Age=1501.0; Foreground=$true; Expected='expire'}
+)) {
+    if ($pendingMethod.Invoke($null, @($case.Age, $case.Foreground)) -ne $case.Expected) {
+        throw 'Pending pause/return/expiry assertion failed'
+    }
+}
+Write-Output 'Windows pending pause/return/expiry cases passed.'

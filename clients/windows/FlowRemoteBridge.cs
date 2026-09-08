@@ -84,6 +84,11 @@ class FlowRemoteBridge
             return false;
         }
     }
+    static string PendingAction(double ageSeconds, bool foreground)
+    {
+        if(ageSeconds>1500)return "expire";
+        return foreground ? "ready" : "pause";
+    }
     static bool Foreground()
     {
         if(!Connected())return false;
@@ -238,10 +243,11 @@ class FlowRemoteBridge
                         }
                         Pending item;
                         if(!pending.TryGetValue(n,out item))continue;
-                        if((DateTime.UtcNow-item.Born).TotalSeconds>1500||!Foreground())
+                        string action=PendingAction((DateTime.UtcNow-item.Born).TotalSeconds,Foreground());
+                        if(action=="expire")
                         {
                             pending.Remove(n);
-                            Log("Cancelled: expired or focus left Parsec");
+                            Log("Cancelled: expired");
                             continue;
                         }
                         if(r[3]!=""&&r[3]!="parsecd")
@@ -249,6 +255,7 @@ class FlowRemoteBridge
                             pending.Remove(n);
                             continue;
                         }
+                        if(action=="pause")continue;
                         if(r[2]=="formatted"&&r[4]!="")
                         {
                             if(item.Body!=r[4])
@@ -258,9 +265,9 @@ class FlowRemoteBridge
                                 continue;
                             }
                             if((DateTime.UtcNow-item.Stable).TotalSeconds<0.7)continue;
-                            pending.Remove(n);
                             if(Foreground())
                             {
+                                pending.Remove(n); // Never replay an uncertain delivery.
                                 var reply=Request(new Dictionary<string,object>
                                 {
                                     { "op", "paste" }
