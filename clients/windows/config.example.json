@@ -1,0 +1,6 @@
+{
+  "client_id": "windows-client",
+  "ssh_host": "remote-mac",
+  "wsl_distribution": "Ubuntu",
+  "wsl_user": "your_linux_username"
+}

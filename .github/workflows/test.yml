@@ -1,0 +1,29 @@
+name: Build and policy tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -v
+      - run: python -m compileall -q clients/macos scripts/install-macos.py
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: mkdir -p build
+      - run: xcrun swiftc -swift-version 5 -O receiver/Receiver.swift -o build/FlowRemoteReceiver
+      - run: xcrun swiftc clients/macos/Frontmost.swift -o build/frontmost
+      - run: bash -n scripts/uninstall-macos.sh
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and check connection policy
+        shell: powershell
+        run: .\tests\windows.ps1

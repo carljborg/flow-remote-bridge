@@ -1,0 +1,12 @@
+build/
+__pycache__/
+*.pyc
+.DS_Store
+*.exe
+*.app/
+*.sqlite*
+*.db*
+*.log
+.env*
+config.json
+health.json

@@ -1,0 +1,6 @@
+{
+  "client_id": "mac-client",
+  "ssh_host": "remote-mac",
+  "flow_database": "~/Library/Application Support/Wispr Flow/flow.sqlite",
+  "parsec_log": "~/.parsec/log.txt"
+}
