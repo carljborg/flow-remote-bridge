@@ -4,7 +4,7 @@ This optional macOS-to-macOS adapter routes a small, explicit set of shortcuts o
 
 Parsec [requires HID capture for immersive mode on macOS](https://support.parsec.app/hc/en-us/articles/32361385571860-Immersive-Mode-Setting). Turning HID off to support local Hammerspoon controls means that selecting keyboard immersive mode alone does not capture all system shortcuts. Turning HID back on can bypass those local event taps. Decide which behavior you want before changing either setting.
 
-The example routes Command+W, Command+Q, Command+Shift+4 and Command+Space remotely. Copy, paste, refresh and new-tab are left to Parsec. A modifier-only Wispr activation chord is not intercepted. Brightness and volume can remain local through your existing configuration. Removing a route means normal local/Parsec handling, not a guarantee of a local-only action.
+The example routes Command+W, Command+Q, Command+T, Command+Shift+4 and Command+Space remotely. Copy, paste and refresh are left to Parsec. New Tab uses a native menu action because the original non-HID client dropped Command+T releases. A modifier-only Wispr activation chord is not intercepted. Brightness and volume can remain local through your existing configuration. Removing a route means normal local/Parsec handling, not a guarantee of a local-only action.
 
 ## Files and configuration
 
@@ -81,7 +81,7 @@ To force a shortcut locally, add a separate gated local handler that consumes it
 
 1. Record which machine has the keyboard, which runs the target app, HID settings, and intended local exceptions.
 2. Back up modules and preserve existing Accessibility grants. Never reset all privacy permissions as part of installation.
-3. Run `lua5.4 tests/test_shortcut_router.lua` and `lua5.4 tests/test_shortcut_receiver.lua` from the repository root. Tests cover exact modifiers, repeat suppression, key release after focus changes, inactive mode and untouched C/V/R/T.
+3. Run `lua5.4 tests/test_shortcut_router.lua` and `lua5.4 tests/test_shortcut_receiver.lua` from the repository root. Tests cover exact modifiers, repeat suppression, key release after focus changes, inactive mode and untouched C/V/R.
 4. Verify both services are loaded and reject expired/unknown requests. Test with a disposable window first. Do not test quit against someone's working terminal or editor.
 5. Physically test each shortcut once, verify only one destination acts, then test copy/paste, Wispr, volume and brightness. A mocked test is not proof of native keyboard behavior.
 6. Test leaving Parsec and releasing a held key. The callback must still see key-up after focus changes, so do not put a foreground early-return before it.
@@ -89,8 +89,12 @@ To force a shortcut locally, add a separate gated local handler that consumes it
 
 The original user confirmed close/quit routing but subsequent testing found interference with normal Command shortcuts in both synthetic-key implementations. Those versions are superseded. The current receiver performs native actions instead:
 
-- Close/Quit: discover the unique enabled Command+W/Q menu item and invoke it through Accessibility. Preserve unsaved-document prompts; never force-kill the application. Missing or ambiguous menus cause a reported failure.
+- Close/Quit/New Tab: discover the unique enabled Command+W/Q/T menu item and invoke it through Accessibility. Preserve unsaved-document prompts; never force-kill the application. Missing or ambiguous menus cause a reported failure.
 - Area screenshot: open `cleanshot://capture-area` on the host using [CleanShot's documented API](https://cleanshot.com/docs-api). CleanShot must be installed, registered and authorized for screen capture.
 - Spotlight: activate Spotlight directly, or hide it when it is already frontmost. This does not promise exact keyboard-toggle semantics in every macOS release.
 
 No ordinary keyboard or modifier events are injected by this action module. Media controls remain separate. The public regression tests verify dispatch, matching/focus rules and absence of keyboard synthesis; physical regression validation remains required. Windows clients need a Windows-native adapter. Other remote desktop products need their own foreground/connection detection and capture testing.
+
+### Observed Command+T release failure
+
+The local event trace showed separate Command+T down/up pairs, while the host received only downs and marked later presses as autorepeats. A client-side flag adjustment failed and was removed. The workaround uses the native New Tab menu action, not keyboard injection or a global typing remap. Close menu actions were observed succeeding repeatedly after correcting traversal of anonymous nested AXMenu arrays. Temporary diagnostic taps are not installed by this public package.

@@ -15,6 +15,9 @@ hs={
 local m=dofile('extras/hammerspoon/shortcut-routing/native_actions.lua')
 local function run(a)m.run(a,app,7,function(s)status=s end)end
 run('CLOSE_WINDOW');check(status=='menu-selected');check(selected=='File/Close Tab')
+menus[1].AXChildren[1][1].AXMenuItemCmdChar='T'
+run('NEW_TAB');check(status=='menu-selected')
+menus[1].AXChildren[1][1].AXMenuItemCmdChar='W'
 run('QUIT_APP');check(status=='menu-action-unavailable')
 front=nil;run('CLOSE_WINDOW');check(status=='target-changed-or-expired')
 run('SPOTLIGHT');check(opened.path=='/usr/bin/open' and opened.args[1]=='-a' and opened.args[2]=='/System/Library/CoreServices/Spotlight.app')

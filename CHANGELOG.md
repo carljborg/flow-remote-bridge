@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add native New Tab routing for an observed non-HID Command+T key-release failure; handle anonymous menu arrays.
+
 - Replace unreliable synthetic shortcut injection with native menu, Spotlight and CleanShot actions. Remove cross-machine clock comparisons; expire accepted requests using host-local time.
 
 - Correct optional shortcut injection to avoid modifier-managing helpers, allow system shortcuts without a focused window, and add Command+Space routing.

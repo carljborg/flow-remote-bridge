@@ -37,14 +37,14 @@ function M.run(action,app,windowId,done)
    M.tasks[task]=true
    if not task:start() then M.tasks[task]=nil;done('spotlight-open-failed') end
   end
- elseif action=='CLOSE_WINDOW' or action=='QUIT_APP' then
+ elseif action=='CLOSE_WINDOW' or action=='QUIT_APP' or action=='NEW_TAB' then
   if not app then done('no-target');return end
   local started=hs.timer.absoluteTime()
   app:getMenuItems(function(items)
    local front=hs.application.frontmostApplication()
    local window=front and front:focusedWindow()
    if hs.timer.absoluteTime()-started>2000000000 or not front or front:pid()~=app:pid() or not window or window:id()~=windowId then done('target-changed-or-expired');return end
-   local found={};locate(items,action=='CLOSE_WINDOW' and 'w' or 'q',{},found)
+   local found={};locate(items,({CLOSE_WINDOW='w',QUIT_APP='q',NEW_TAB='t'})[action],{},found)
    if #found~=1 then done('menu-action-unavailable');return end
    done(app:selectMenuItem(found[1]) and 'menu-selected' or 'menu-action-failed')
   end)
