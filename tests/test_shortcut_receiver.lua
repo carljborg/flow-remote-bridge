@@ -5,6 +5,7 @@ current=app
 local oldOpen,oldRemove,oldRename=io.open,os.remove,os.rename
 io.open=function()return {read=function()return 'request' end,write=function()end,close=function()end} end
 os.remove=function()end;os.rename=function()end
+package.preload.native_actions=function()return {run=function(action,target,window,done) posted[#posted+1]={action=action,target=target};done('native-action') end} end
 package.preload.shortcut_actions=function()return dofile('extras/hammerspoon/shortcut-routing/host_actions.example.lua') end
 hs={
  keycodes={map={w=13,q=12,['4']=21,space=49}},
@@ -26,16 +27,14 @@ local function run(action,opts)
  for k,v in pairs(opts or {}) do request[k]=v end
  callback()
 end
-run('CLOSE_WINDOW');check(#posted==2);check(posted[1].target==app);check(posted[2].target==app)
-check(posted[1].Type==10 and posted[2].Type==11);check(posted[1].Flags.cmd and posted[2].Flags.cmd)
-run('QUIT_APP');check(#posted==2 and posted[1].KeyCode==12)
+run('CLOSE_WINDOW');check(#posted==1);check(posted[1].target==app);check(posted[1].action=='CLOSE_WINDOW')
+run('QUIT_APP');check(#posted==1 and posted[1].action=='QUIT_APP')
 run('CLOSE_WINDOW',{windowId=8});check(#posted==0)
 run('CLOSE_WINDOW',{time=97.5});check(#posted==0)
 run('UNKNOWN');check(#posted==0)
 current=nil
 run('CLOSE_WINDOW');check(#posted==0)
-run('SCREENSHOT_REGION');check(#posted==2);check(posted[1].target==nil and posted[2].target==nil)
-check(posted[1].Flags.cmd and posted[1].Flags.shift)
-run('SPOTLIGHT');check(#posted==2 and posted[1].target==nil and posted[1].KeyCode==49)
+run('SCREENSHOT_REGION');check(#posted==1 and posted[1].action=='SCREENSHOT_REGION')
+run('SPOTLIGHT');check(#posted==1 and posted[1].action=='SPOTLIGHT')
 io.open,os.remove,os.rename=oldOpen,oldRemove,oldRename
 print('Passed '..checks..' shortcut receiver checks')

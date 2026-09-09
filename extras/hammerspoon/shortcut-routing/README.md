@@ -12,15 +12,16 @@ The example routes Command+W, Command+Q, Command+Shift+4 and Command+Space remot
 | --- | --- |
 | `shortcut_router.lua` | Local Mac: exact-modifier event filter with held-key/release suppression |
 | `routes.example.lua` | Local Mac: chosen shortcut-to-action table |
-| `host_actions.example.lua` | Remote Mac: allowlisted action-to-keystroke table |
+| `host_actions.example.lua` | Remote Mac: allowlisted action names (key descriptions are informational) |
 | `submit-shortcut.py` | Remote Mac: authenticated SSH command target, validates and queues requests |
+| `native_actions.lua` | Remote Mac: native menu actions, Spotlight activation and CleanShot URL API |
 | `shortcut_receiver.lua` | Remote Mac: Hammerspoon queue consumer with Accessibility permission |
 
 These are adapter components, not an automatic installer. Back up both Hammerspoon configurations first. Do not replace existing init files or enable duplicate routing modules. The original private deployment integrates this policy into its existing media transport; this public adapter uses a separate directory.
 
 ## Remote Mac
 
-1. Copy `shortcut_receiver.lua` to `~/.hammerspoon/` and `host_actions.example.lua` to `~/.hammerspoon/shortcut_actions.lua`.
+1. Copy `shortcut_receiver.lua` and `native_actions.lua` to `~/.hammerspoon/` and `host_actions.example.lua` to `~/.hammerspoon/shortcut_actions.lua`.
 2. Copy `submit-shortcut.py` to `~/.local/bin/submit-shortcut.py`. Use an absolute Python 3 executable in your SSH command, since non-interactive PATH may differ.
 3. Create private queue storage:
 
@@ -63,16 +64,16 @@ local routeShortcut = require('shortcut_router').new({
 Your asynchronous SSH adapter should use `hs.task` with separate argument strings and run this command on your verified host:
 
 ```text
-/absolute/path/to/python3 /Users/YOUR_USER/.local/bin/submit-shortcut.py CLOSE_WINDOW ORIGINAL_UNIX_TIMESTAMP
+/absolute/path/to/python3 /Users/YOUR_USER/.local/bin/submit-shortcut.py CLOSE_WINDOW 
 ```
 
-Do not use arbitrary user text as a command or shell-interpolate paths. Use key authentication, verified known_hosts, BatchMode, a short connection timeout, a bounded serial queue and no retries. An SSH ControlMaster can reduce latency. Preserve the original timestamp while queueing; both Macs need synchronized clocks. Drop local requests older than two seconds. Surface failures locally, without sending the shortcut to a different destination.
+Do not use arbitrary user text as a command or shell-interpolate paths. Use key authentication, verified known_hosts, BatchMode, a short connection timeout, a bounded serial queue and no retries. An SSH ControlMaster can reduce latency. Use a local monotonic clock to drop queued requests older than two seconds before dispatch. The submitter stamps acceptance using the host clock, and the receiver expires queued requests using that same host clock. No client/host wall-clock comparison is made. This does not bound time already spent in SSH transit; use a short connection timeout and never retry uncertain actions. Surface failures locally, without sending the shortcut to a different destination.
 
-The host rejects unknown tokens, missing/stale timestamps, unavailable permission/heartbeat or missing target windows for app-specific actions. Requests expire two seconds after the original keypress. For app-specific actions, it captures the frontmost application/window at submission and checks again at delivery. Screenshot and Spotlight are system actions. This reduces focus races but cannot guarantee the same target as at the original physical keypress. Do not use this mechanism for unattended destructive shortcuts. It records only action IDs, times and application/window numeric IDs, not typing or transcript contents. No network listener is added; SSH account permissions remain your security boundary.
+The host rejects unknown tokens, unavailable permission/heartbeat or missing target windows for app-specific actions. Accepted requests expire two seconds after host submission. The timestamp argument from older senders is ignored. For app-specific actions, it captures the frontmost application/window at submission and checks again at delivery. Screenshot and Spotlight are system actions. This reduces focus races but cannot guarantee the same target as at the original physical keypress. Do not use this mechanism for unattended destructive shortcuts. It records only action IDs, times and application/window numeric IDs, not typing or transcript contents. No network listener is added; SSH account permissions remain your security boundary.
 
 ## Changing a route
 
-To add Command+Shift+5, for example, add a local route with an action such as `SCREENSHOT_OPTIONS`, a corresponding remote entry `{mods={'cmd','shift'}, key='5'}`, and add that token to the Python submitter's `shortcuts` allowlist. Reload both modules. Keep local and remote actions explicit. Leave working copy/paste routes alone unless there is a demonstrated reason to override them.
+To add a shortcut, add its local route and an explicit remote action token to both the host table and Python allowlist. Implement the corresponding native operation in `native_actions.lua`. The example key/modifier fields in the host table describe intent; they do not synthesize a keystroke. Do not reintroduce generic key injection as a fallback when a menu item is unavailable. Reload both ends after changes. Keep working copy/paste routes untouched.
 
 To force a shortcut locally, add a separate gated local handler that consumes its original down/up and posts a tagged local event or calls the appropriate local API. Exclude your own synthetic-event tag to prevent a loop. Merely removing a remote route lets Parsec decide; it does not force locality. Brightness and system media keys use different event types, so they are not examples of ordinary Command shortcuts.
 
@@ -86,4 +87,10 @@ To force a shortcut locally, add a separate gated local handler that consumes it
 6. Test leaving Parsec and releasing a held key. The callback must still see key-up after focus changes, so do not put a foreground early-return before it.
 7. To roll back, remove the callback from the existing tap and reload, then stop/remove the optional receiver. Do not kill Parsec or reboot either Mac as an installation step.
 
-The original user confirmed close/quit routing. The first implementation also caused suspected held-modifier interference and rejected some screenshots with no focused window. The receiver now posts explicit key-down/up events directly to the target app for close/quit, avoiding the modifier-managing keyStroke/newKeyEvent helpers. System shortcuts use global events. The corrected implementation has mocked receiver tests; physical regression testing is still required. Windows clients need a Windows-native adapter; these Lua modules are for macOS. Other remote desktop products need their own foreground/connection detection and capture testing.
+The original user confirmed close/quit routing but subsequent testing found interference with normal Command shortcuts in both synthetic-key implementations. Those versions are superseded. The current receiver performs native actions instead:
+
+- Close/Quit: discover the unique enabled Command+W/Q menu item and invoke it through Accessibility. Preserve unsaved-document prompts; never force-kill the application. Missing or ambiguous menus cause a reported failure.
+- Area screenshot: open `cleanshot://capture-area` on the host using [CleanShot's documented API](https://cleanshot.com/docs-api). CleanShot must be installed, registered and authorized for screen capture.
+- Spotlight: activate Spotlight directly, or hide it when it is already frontmost. This does not promise exact keyboard-toggle semantics in every macOS release.
+
+No ordinary keyboard or modifier events are injected by this action module. Media controls remain separate. The public regression tests verify dispatch, matching/focus rules and absence of keyboard synthesis; physical regression validation remains required. Windows clients need a Windows-native adapter. Other remote desktop products need their own foreground/connection detection and capture testing.

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Replace unreliable synthetic shortcut injection with native menu, Spotlight and CleanShot actions. Remove cross-machine clock comparisons; expire accepted requests using host-local time.
+
 - Correct optional shortcut injection to avoid modifier-managing helpers, allow system shortcuts without a focused window, and add Command+Space routing.
 
 - Add optional configurable macOS shortcut-routing components and human/agent setup instructions.

@@ -1,6 +1,7 @@
 local M = {}
 local root = os.getenv('HOME') .. '/.local/state/flow-shortcut-routing'
 local shortcuts = require('shortcut_actions')
+local native = require('native_actions')
 local allowed = {}
 local function save(name,value)
   local f=io.open(root..'/'..name..'.tmp','w')
@@ -36,14 +37,10 @@ M.timer=hs.timer.doEvery(0.1,function()
       save('last-action.json',{action=r.action,time=now,id=r.id,status='dropped-focus-or-age'})
       goto continue
      end
-     -- Build events directly: newKeyEvent/keyStroke manage shared modifier state.
-     -- App-local W/Q must not disturb Parsec's independently held keys.
-     local flags={};for _,mod in ipairs(shortcut.mods) do flags[mod]=true end
-     local event=hs.eventtap.event
-     local target=r.action~='SCREENSHOT_REGION' and r.action~='SPOTLIGHT' and current or nil
-     for _,kind in ipairs({event.types.keyDown,event.types.keyUp}) do
-      event.newEvent():setType(kind):setKeyCode(hs.keycodes.map[shortcut.key]):setFlags(flags):post(target)
-     end
+     native.run(r.action,current,windowId,function(status)
+      save('last-action.json',{action=r.action,time=hs.timer.secondsSinceEpoch(),id=r.id,status=status})
+     end)
+     goto continue
     else
      hs.eventtap.event.newSystemKeyEvent(r.action,true):post()
      hs.eventtap.event.newSystemKeyEvent(r.action,false):post()
