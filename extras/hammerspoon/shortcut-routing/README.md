@@ -64,7 +64,7 @@ local routeShortcut = require('shortcut_router').new({
 Your asynchronous SSH adapter should use `hs.task` with separate argument strings and run this command on your verified host:
 
 ```text
-/absolute/path/to/python3 /Users/YOUR_USER/.local/bin/submit-shortcut.py CLOSE_WINDOW 
+/absolute/path/to/python3 /Users/YOUR_USER/.local/bin/submit-shortcut.py CLOSE_WINDOW
 ```
 
 Do not use arbitrary user text as a command or shell-interpolate paths. Use key authentication, verified known_hosts, BatchMode, a short connection timeout, a bounded serial queue and no retries. An SSH ControlMaster can reduce latency. Use a local monotonic clock to drop queued requests older than two seconds before dispatch. The submitter stamps acceptance using the host clock, and the receiver expires queued requests using that same host clock. No client/host wall-clock comparison is made. This does not bound time already spent in SSH transit; use a short connection timeout and never retry uncertain actions. Surface failures locally, without sending the shortcut to a different destination.
