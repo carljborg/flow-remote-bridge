@@ -104,3 +104,24 @@ The local event trace showed separate Command+T down/up pairs, while the host re
 Parsec offers keyboard/mouse/both immersive modes, not a per-shortcut allowlist. macOS keyboard immersive mode requires HID, which can bypass these local event taps. Do not turn it on blindly when local Wispr or media exceptions matter.
 
 Command+Tab switches applications (Command+backtick switches windows within an app). Full remote app-switcher behavior needs a press/step/release protocol: hold Command, cycle with Tab or Shift+Tab, commit on release, cancel on Escape or lost focus, and clean up on connection failure. This package does not implement that protocol. Do not add Command+Tab as another one-shot release-gated shortcut and claim native held-key behavior. A safe implementation needs independent timeout/release recovery and physical regression tests.
+
+
+### Optional Paste shortcuts
+
+The example routes also include Command+Shift+V (`PASTE_HISTORY`) and
+Command+Option+Shift+V (`PASTE_MATCH_STYLE`). Copy `paste_shortcut.lua` to the
+host Hammerspoon configuration along with the other receiver modules. Paste
+must be installed and its activation shortcut must be Command+Shift+V.
+The second action sends the standard paste-and-match-style shortcut; support
+and the resulting behavior depend on the focused app.
+
+Both actions wait for modifier release, reject a changed target, and expire
+rather than replay later. Ordinary Command+V and Command+C are not routed.
+When integrating with the Wispr synthetic-V guard, run that guard before
+`shortcutRouter`, so a Wispr-generated V cannot become a Paste action. Keep
+the guard scoped to a connected, foreground Parsec window and preserve the
+router's key-up cleanup even after focus changes.
+
+Agent validation: run `tests/test_paste_shortcut.lua` and the existing routing
+regressions. Test both shortcuts from the physical client keyboard before
+claiming end-to-end validation. No clipboard contents are read by this module.

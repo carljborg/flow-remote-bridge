@@ -24,6 +24,8 @@ function M.run(action,app,windowId,done)
   if not task then done('task-unavailable');return end
   M.tasks[task]=true
   if not task:start() then M.tasks[task]=nil;done('cleanshot-open-failed') end
+ elseif action=='PASTE_HISTORY' or action=='PASTE_MATCH_STYLE' then
+  require('paste_shortcut').run(action,app,windowId,done)
  elseif action=='SPOTLIGHT' then
   require('spotlight_shortcut').toggle(done)
  elseif action=='CLOSE_WINDOW' or action=='QUIT_APP' or action=='NEW_TAB' then

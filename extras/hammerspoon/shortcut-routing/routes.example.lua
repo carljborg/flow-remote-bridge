@@ -1,6 +1,8 @@
 -- LOCAL Mac: delete an entry to let Parsec/macOS handle that shortcut normally.
 -- Both left and right Command match. The Wispr modifier-only chord is untouched.
 return {
+    {mods={'cmd','shift'}, key='v', action='PASTE_HISTORY'},
+    {mods={'cmd','alt','shift'}, key='v', action='PASTE_MATCH_STYLE'},
     {mods = {'cmd'}, key = 't', action = 'NEW_TAB'},
     {mods = {'cmd'}, key = 'space', action = 'SPOTLIGHT'},
     {mods = {'cmd'}, key = 'w', action = 'CLOSE_WINDOW'},

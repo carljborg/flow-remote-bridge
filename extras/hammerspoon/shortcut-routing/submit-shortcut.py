@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import json,pathlib,sys,time,uuid,os
-shortcuts={'NEW_TAB','CLOSE_WINDOW','QUIT_APP','SCREENSHOT_REGION','SPOTLIGHT'}
+shortcuts={'PASTE_HISTORY','PASTE_MATCH_STYLE','NEW_TAB','CLOSE_WINDOW','QUIT_APP','SCREENSHOT_REGION','SPOTLIGHT'}
 allowed=shortcuts
 if len(sys.argv) not in (2,3) or sys.argv[1] not in allowed:raise SystemExit('Unsupported media command')
 base=pathlib.Path.home()/'.local/state/flow-shortcut-routing'
