@@ -8,7 +8,7 @@ This is by no means meant for wide distribution but I wanted to share in case an
 
 No extra dictation shortcut. No manual clipboard juggling. No generic clipboard watcher.
 
-> **Early public release — v0.1.2.** The original implementation was tested with real dictation from both macOS and Windows 11 Parsec clients into a Mac host. This repository packages that implementation with configurable paths, installers, tests, and documentation. It depends on Wispr Flow's **undocumented local history schema**, so Flow updates may require changes. It is not an official Wispr or Parsec integration.
+> **Early public release.** The original implementation was tested with real dictation from both macOS and Windows 11 Parsec clients into a Mac host. This repository packages that implementation with configurable paths, installers, tests, and documentation. It depends on Wispr Flow's **undocumented local history schema**, so Flow updates may require changes. It is not an official Wispr or Parsec integration.
 
 ## What works today
 
@@ -93,6 +93,14 @@ Start-ScheduledTask -TaskName 'Flow Remote Bridge'
 Then connect with Parsec, click into a harmless text document on the remote Mac, and dictate normally. Keep the remote target unchanged. You may temporarily minimize Parsec and return; pending dictation waits for you. Test a short phrase first, then punctuation, non-English text, and a second dictation.
 
 **Read the [complete setup and uninstall guide](docs/setup.md)** for SSH verification, configuration, health checks, autostart, logs, and updates.
+
+## Optional macOS fix: stray `v` before dictation
+
+If Parsec receives an extra `v` before otherwise successful dictation, see the
+[optional Hammerspoon paste guard](extras/hammerspoon/README.md). It suppresses
+Wispr's separate local synthetic paste attempt while the bridge delivers text
+on the remote Mac. It is opt-in, requires client Accessibility access, and is
+not a general keyboard remapper or a Windows fix.
 
 ## Safeguards and limits
 

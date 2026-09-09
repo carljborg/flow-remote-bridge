@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add an opt-in macOS Hammerspoon guard for Wispr-generated V events leaking into focused Parsec before bridged dictation. No core bridge changes or automatic installation.
+- Document observed event-source evidence, permission requirements, integration limits, disable/uninstall steps, and add mocked input-policy tests.
+
 ## v0.1.3 — Pause dictation while away from Parsec
 
 - macOS and Windows keep already-armed dictations pending when Parsec loses foreground focus; return within 25 minutes of arming to attempt delivery to the original validated Mac field.
