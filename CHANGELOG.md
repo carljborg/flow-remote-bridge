@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add optional configurable macOS shortcut-routing components and human/agent setup instructions.
+
 - Add an opt-in macOS Hammerspoon guard for Wispr-generated V events leaking into focused Parsec before bridged dictation. No core bridge changes or automatic installation.
 - Document observed event-source evidence, permission requirements, integration limits, disable/uninstall steps, and add mocked input-policy tests.
 

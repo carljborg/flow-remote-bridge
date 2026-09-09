@@ -147,3 +147,7 @@ MIT licensed. Independently developed with assistance from OpenAI Codex.
 - [robertjordanjr/remote-wispr](https://github.com/robertjordanjr/remote-wispr) is a related Apple Screen Sharing reference implementation we encountered during research. It demonstrates another approach to bridging Flow history into a remote Mac; no code from it is included here.
 
 Wispr Flow, Parsec, Tailscale, and other names belong to their respective owners. This project is unaffiliated with them.
+
+## Optional selective keyboard routing
+
+For macOS clients that keep Wispr and media controls local, see [selective shortcut routing](extras/hammerspoon/shortcut-routing/README.md). Includes editable shortcut tables, host allowlisting, policy tests, and setup/rollback instructions for humans and agents. This is an adapter example, not enabled by the core installer.
