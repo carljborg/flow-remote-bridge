@@ -35,3 +35,4 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y lua5.4
       - run: lua5.4 tests/test_flow_paste_guard.lua
       - run: lua5.4 tests/test_shortcut_router.lua
+      - run: lua5.4 tests/test_shortcut_receiver.lua

@@ -32,11 +32,18 @@ M.timer=hs.timer.doEvery(0.1,function()
      local current=hs.application.frontmostApplication()
      local focused=current and current:focusedWindow()
      appPid=current and current:pid();windowId=focused and focused:id()
-     if now-r.time>=2 or not windowId or r.appPid~=appPid or r.windowId~=windowId then
+     if now-r.time>=2 or (r.action~='SCREENSHOT_REGION' and r.action~='SPOTLIGHT' and (not windowId or r.appPid~=appPid or r.windowId~=windowId)) then
       save('last-action.json',{action=r.action,time=now,id=r.id,status='dropped-focus-or-age'})
       goto continue
      end
-     hs.eventtap.keyStroke(shortcut.mods,shortcut.key,0)
+     -- Build events directly: newKeyEvent/keyStroke manage shared modifier state.
+     -- App-local W/Q must not disturb Parsec's independently held keys.
+     local flags={};for _,mod in ipairs(shortcut.mods) do flags[mod]=true end
+     local event=hs.eventtap.event
+     local target=r.action~='SCREENSHOT_REGION' and r.action~='SPOTLIGHT' and current or nil
+     for _,kind in ipairs({event.types.keyDown,event.types.keyUp}) do
+      event.newEvent():setType(kind):setKeyCode(hs.keycodes.map[shortcut.key]):setFlags(flags):post(target)
+     end
     else
      hs.eventtap.event.newSystemKeyEvent(r.action,true):post()
      hs.eventtap.event.newSystemKeyEvent(r.action,false):post()

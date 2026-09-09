@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Correct optional shortcut injection to avoid modifier-managing helpers, allow system shortcuts without a focused window, and add Command+Space routing.
+
 - Add optional configurable macOS shortcut-routing components and human/agent setup instructions.
 
 - Add an opt-in macOS Hammerspoon guard for Wispr-generated V events leaking into focused Parsec before bridged dictation. No core bridge changes or automatic installation.

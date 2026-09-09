@@ -1,6 +1,6 @@
 local n=0
 local function check(ok) assert(ok, 'check '..(n+1)); n=n+1 end
-hs={keycodes={map={w=13,q=12,['4']=21,v=9,c=8,r=15,t=17}},eventtap={event={types={keyDown=10,keyUp=11},properties={}}}}
+hs={keycodes={map={space=49,w=13,q=12,['4']=21,v=9,c=8,r=15,t=17}},eventtap={event={types={keyDown=10,keyUp=11},properties={}}}}
 local active=true
 local sent={}
 local route=dofile('extras/hammerspoon/shortcut-routing/shortcut_router.lua').new({
@@ -29,4 +29,5 @@ check(not route(event('w',10,{})))
 check(not route(event('w',11)))
 check(not route(event('w',12)))
 check(#sent==3)
+check(route(event('space')));check(sent[4]=='SPOTLIGHT');check(route(event('space',11)))
 print('Passed '..n..' selective-shortcut policy checks')

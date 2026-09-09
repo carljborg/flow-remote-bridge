@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import json,pathlib,sys,time,uuid,os
-shortcuts={'CLOSE_WINDOW','QUIT_APP','SCREENSHOT_REGION'}
+shortcuts={'CLOSE_WINDOW','QUIT_APP','SCREENSHOT_REGION','SPOTLIGHT'}
 allowed=shortcuts
 if len(sys.argv) not in (2,3) or sys.argv[1] not in allowed:raise SystemExit('Unsupported shortcut')
 base=pathlib.Path.home()/'.local/state/flow-shortcut-routing'
@@ -13,7 +13,7 @@ if sys.argv[1] in shortcuts:
  if len(sys.argv)!=3:raise SystemExit('Shortcut requires original timestamp')
  stamp=float(sys.argv[2])
  if not 0 <= time.time()-stamp < 2:raise SystemExit('Shortcut expired or clocks differ')
- if not r.get('appPid') or not r.get('windowId'):raise SystemExit('No focused target window')
+ if sys.argv[1] not in {'SCREENSHOT_REGION','SPOTLIGHT'} and (not r.get('appPid') or not r.get('windowId')):raise SystemExit('No focused target window')
  if time.time()-r['time']>0.5:raise SystemExit('Shortcut receiver stale')
 q=base/'queue'
 if len(list(q.glob('*.json')))>12:raise SystemExit('Shortcut queue full')

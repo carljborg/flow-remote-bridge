@@ -4,7 +4,7 @@ This optional macOS-to-macOS adapter routes a small, explicit set of shortcuts o
 
 Parsec [requires HID capture for immersive mode on macOS](https://support.parsec.app/hc/en-us/articles/32361385571860-Immersive-Mode-Setting). Turning HID off to support local Hammerspoon controls means that selecting keyboard immersive mode alone does not capture all system shortcuts. Turning HID back on can bypass those local event taps. Decide which behavior you want before changing either setting.
 
-The example routes Command+W, Command+Q and Command+Shift+4 remotely. Copy, paste, refresh and new-tab are left to Parsec. A modifier-only Wispr activation chord is not intercepted. Brightness and volume can remain local through your existing configuration. Removing a route means normal local/Parsec handling, not a guarantee of a local-only action.
+The example routes Command+W, Command+Q, Command+Shift+4 and Command+Space remotely. Copy, paste, refresh and new-tab are left to Parsec. A modifier-only Wispr activation chord is not intercepted. Brightness and volume can remain local through your existing configuration. Removing a route means normal local/Parsec handling, not a guarantee of a local-only action.
 
 ## Files and configuration
 
@@ -35,7 +35,7 @@ chmod 700 ~/.local/state/flow-shortcut-routing ~/.local/state/flow-shortcut-rout
 shortcutReceiver = require('shortcut_receiver')
 ```
 
-Grant Accessibility to Hammerspoon through macOS if needed. The receiver needs a logged-in desktop and a focused window. It is not a pre-login service. Enable Hammerspoon at login if desired.
+Grant Accessibility to Hammerspoon through macOS if needed. The receiver needs a logged-in desktop and a focused window for app-specific shortcuts. Screenshots and Spotlight can run without a focused window. It is not a pre-login service. Enable Hammerspoon at login if desired.
 
 ## Local Mac
 
@@ -68,7 +68,7 @@ Your asynchronous SSH adapter should use `hs.task` with separate argument string
 
 Do not use arbitrary user text as a command or shell-interpolate paths. Use key authentication, verified known_hosts, BatchMode, a short connection timeout, a bounded serial queue and no retries. An SSH ControlMaster can reduce latency. Preserve the original timestamp while queueing; both Macs need synchronized clocks. Drop local requests older than two seconds. Surface failures locally, without sending the shortcut to a different destination.
 
-The host rejects unknown tokens, missing/stale timestamps, unavailable permission/heartbeat or missing target windows. Requests expire two seconds after the original keypress. It captures the frontmost application/window at submission and checks again at delivery. This reduces focus races but cannot guarantee the same target as at the original physical keypress. Do not use this mechanism for unattended destructive shortcuts. It records only action IDs, times and application/window numeric IDs, not typing or transcript contents. No network listener is added; SSH account permissions remain your security boundary.
+The host rejects unknown tokens, missing/stale timestamps, unavailable permission/heartbeat or missing target windows for app-specific actions. Requests expire two seconds after the original keypress. For app-specific actions, it captures the frontmost application/window at submission and checks again at delivery. Screenshot and Spotlight are system actions. This reduces focus races but cannot guarantee the same target as at the original physical keypress. Do not use this mechanism for unattended destructive shortcuts. It records only action IDs, times and application/window numeric IDs, not typing or transcript contents. No network listener is added; SSH account permissions remain your security boundary.
 
 ## Changing a route
 
@@ -80,10 +80,10 @@ To force a shortcut locally, add a separate gated local handler that consumes it
 
 1. Record which machine has the keyboard, which runs the target app, HID settings, and intended local exceptions.
 2. Back up modules and preserve existing Accessibility grants. Never reset all privacy permissions as part of installation.
-3. Run `lua5.4 tests/test_shortcut_router.lua` from the repository root. Tests cover exact modifiers, repeat suppression, key release after focus changes, inactive mode and untouched C/V/R/T.
+3. Run `lua5.4 tests/test_shortcut_router.lua` and `lua5.4 tests/test_shortcut_receiver.lua` from the repository root. Tests cover exact modifiers, repeat suppression, key release after focus changes, inactive mode and untouched C/V/R/T.
 4. Verify both services are loaded and reject expired/unknown requests. Test with a disposable window first. Do not test quit against someone's working terminal or editor.
 5. Physically test each shortcut once, verify only one destination acts, then test copy/paste, Wispr, volume and brightness. A mocked test is not proof of native keyboard behavior.
 6. Test leaving Parsec and releasing a held key. The callback must still see key-up after focus changes, so do not put a foreground early-return before it.
 7. To roll back, remove the callback from the existing tap and reload, then stop/remove the optional receiver. Do not kill Parsec or reboot either Mac as an installation step.
 
-The original deployment loaded successfully and passed policy checks, but physical routing confirmation was still pending when this example was published. Windows clients need a Windows-native adapter; these Lua modules are for macOS. Other remote desktop products need their own foreground/connection detection and capture testing.
+The original user confirmed close/quit routing. The first implementation also caused suspected held-modifier interference and rejected some screenshots with no focused window. The receiver now posts explicit key-down/up events directly to the target app for close/quit, avoiding the modifier-managing keyStroke/newKeyEvent helpers. System shortcuts use global events. The corrected implementation has mocked receiver tests; physical regression testing is still required. Windows clients need a Windows-native adapter; these Lua modules are for macOS. Other remote desktop products need their own foreground/connection detection and capture testing.
