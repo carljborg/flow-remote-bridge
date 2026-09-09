@@ -1,4 +1,4 @@
--- Native actions only. Never synthesize ordinary keyboard/modifier events.
+-- Native app actions; Spotlight has a separate release-gated OS shortcut.
 local M={tasks={}}
 local function matches(item,key)
  if (item.AXMenuItemCmdChar or ''):lower()~=key then return false end
@@ -25,18 +25,7 @@ function M.run(action,app,windowId,done)
   M.tasks[task]=true
   if not task:start() then M.tasks[task]=nil;done('cleanshot-open-failed') end
  elseif action=='SPOTLIGHT' then
-  local front=hs.application.frontmostApplication()
-  if front and front:bundleID()=='com.apple.Spotlight' then
-   done(front:hide() and 'spotlight-hidden' or 'spotlight-hide-failed')
-  else
-   local task
-   task=hs.task.new('/usr/bin/open',function(code)
-    M.tasks[task]=nil;done(code==0 and 'spotlight-open-requested' or 'spotlight-open-failed')
-   end,{'-a','/System/Library/CoreServices/Spotlight.app'})
-   if not task then done('task-unavailable');return end
-   M.tasks[task]=true
-   if not task:start() then M.tasks[task]=nil;done('spotlight-open-failed') end
-  end
+  require('spotlight_shortcut').toggle(done)
  elseif action=='CLOSE_WINDOW' or action=='QUIT_APP' or action=='NEW_TAB' then
   if not app then done('no-target');return end
   local started=hs.timer.absoluteTime()

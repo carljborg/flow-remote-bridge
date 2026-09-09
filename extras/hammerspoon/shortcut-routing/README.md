@@ -14,14 +14,14 @@ The example routes Command+W, Command+Q, Command+T, Command+Shift+4 and Command+
 | `routes.example.lua` | Local Mac: chosen shortcut-to-action table |
 | `host_actions.example.lua` | Remote Mac: allowlisted action names (key descriptions are informational) |
 | `submit-shortcut.py` | Remote Mac: authenticated SSH command target, validates and queues requests |
-| `native_actions.lua` | Remote Mac: native menu actions, Spotlight activation and CleanShot URL API |
+| `native_actions.lua` | Remote Mac: native menu actions and CleanShot URL API; delegates Spotlight to its release-gated shortcut |
 | `shortcut_receiver.lua` | Remote Mac: Hammerspoon queue consumer with Accessibility permission |
 
 These are adapter components, not an automatic installer. Back up both Hammerspoon configurations first. Do not replace existing init files or enable duplicate routing modules. The original private deployment integrates this policy into its existing media transport; this public adapter uses a separate directory.
 
 ## Remote Mac
 
-1. Copy `shortcut_receiver.lua` and `native_actions.lua` to `~/.hammerspoon/` and `host_actions.example.lua` to `~/.hammerspoon/shortcut_actions.lua`.
+1. Copy `shortcut_receiver.lua`, `native_actions.lua` and `spotlight_shortcut.lua` to `~/.hammerspoon/` and `host_actions.example.lua` to `~/.hammerspoon/shortcut_actions.lua`.
 2. Copy `submit-shortcut.py` to `~/.local/bin/submit-shortcut.py`. Use an absolute Python 3 executable in your SSH command, since non-interactive PATH may differ.
 3. Create private queue storage:
 
@@ -91,10 +91,16 @@ The original user confirmed close/quit routing but subsequent testing found inte
 
 - Close/Quit/New Tab: discover the unique enabled Command+W/Q/T menu item and invoke it through Accessibility. Preserve unsaved-document prompts; never force-kill the application. Missing or ambiguous menus cause a reported failure.
 - Area screenshot: open `cleanshot://capture-area` on the host using [CleanShot's documented API](https://cleanshot.com/docs-api). CleanShot must be installed, registered and authorized for screen capture.
-- Spotlight: activate Spotlight directly, or hide it when it is already frontmost. This does not promise exact keyboard-toggle semantics in every macOS release.
+- Spotlight: wait for modifier release, then emit a complete local Command+Space pair. Application open/hide and menu AXPress approaches were rejected after live testing. The release-gated shortcut was confirmed working by the original user. It waits at most 1.5 seconds, requires 40 ms without held modifiers, rejects Secure Input and does not retry.
 
-No ordinary keyboard or modifier events are injected by this action module. Media controls remain separate. The public regression tests verify dispatch, matching/focus rules and absence of keyboard synthesis; physical regression validation remains required. Windows clients need a Windows-native adapter. Other remote desktop products need their own foreground/connection detection and capture testing.
+Close/Quit/New Tab and CleanShot do not inject keyboard events. Spotlight is the explicit exception described above. Media controls remain separate. The public regression tests verify dispatch, matching/focus rules and absence of keyboard synthesis; physical regression validation remains required. Windows clients need a Windows-native adapter. Other remote desktop products need their own foreground/connection detection and capture testing.
 
 ### Observed Command+T release failure
 
 The local event trace showed separate Command+T down/up pairs, while the host received only downs and marked later presses as autorepeats. A client-side flag adjustment failed and was removed. The workaround uses the native New Tab menu action, not keyboard injection or a global typing remap. Close menu actions were observed succeeding repeatedly after correcting traversal of anonymous nested AXMenu arrays. Temporary diagnostic taps are not installed by this public package.
+
+## App switching is separate
+
+Parsec offers keyboard/mouse/both immersive modes, not a per-shortcut allowlist. macOS keyboard immersive mode requires HID, which can bypass these local event taps. Do not turn it on blindly when local Wispr or media exceptions matter.
+
+Command+Tab switches applications (Command+backtick switches windows within an app). Full remote app-switcher behavior needs a press/step/release protocol: hold Command, cycle with Tab or Shift+Tab, commit on release, cancel on Escape or lost focus, and clean up on connection failure. This package does not implement that protocol. Do not add Command+Tab as another one-shot release-gated shortcut and claim native held-key behavior. A safe implementation needs independent timeout/release recovery and physical regression tests.

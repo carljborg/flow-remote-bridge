@@ -37,3 +37,4 @@ jobs:
       - run: lua5.4 tests/test_shortcut_router.lua
       - run: lua5.4 tests/test_shortcut_receiver.lua
       - run: lua5.4 tests/test_native_actions.lua
+      - run: lua5.4 tests/test_spotlight_shortcut.lua

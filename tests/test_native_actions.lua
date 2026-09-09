@@ -12,6 +12,7 @@ hs={
  task={new=function(path,fn,args)opened={path=path,args=args};return {start=function()return true end}end},
  eventtap=setmetatable({},{__index=function()error('No keyboard synthesis allowed')end}),
 }
+package.preload.spotlight_shortcut=function()return {toggle=function(done)done('spotlight-delegated')end}end
 local m=dofile('extras/hammerspoon/shortcut-routing/native_actions.lua')
 local function run(a)m.run(a,app,7,function(s)status=s end)end
 run('CLOSE_WINDOW');check(status=='menu-selected');check(selected=='File/Close Tab')
@@ -20,9 +21,9 @@ run('NEW_TAB');check(status=='menu-selected')
 menus[1].AXChildren[1][1].AXMenuItemCmdChar='W'
 run('QUIT_APP');check(status=='menu-action-unavailable')
 front=nil;run('CLOSE_WINDOW');check(status=='target-changed-or-expired')
-run('SPOTLIGHT');check(opened.path=='/usr/bin/open' and opened.args[1]=='-a' and opened.args[2]=='/System/Library/CoreServices/Spotlight.app')
+run('SPOTLIGHT');check(status=='spotlight-delegated')
 run('SCREENSHOT_REGION');check(opened.path=='/usr/bin/open');check(opened.args[1]=='cleanshot://capture-area')
 front={bundleID=function()return 'com.apple.Spotlight'end,hide=function()return true end}
-run('SPOTLIGHT');check(status=='spotlight-hidden')
+run('SPOTLIGHT');check(status=='spotlight-delegated')
 run('INVALID');check(status=='unsupported-action')
 print('Passed '..n..' native-action checks without keyboard synthesis')

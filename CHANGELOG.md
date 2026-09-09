@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Publish user-confirmed release-gated Spotlight shortcut, replacing unsuccessful open/hide and menu-toggle approaches. Document app-switcher limitations.
+
 - Add native New Tab routing for an observed non-HID Command+T key-release failure; handle anonymous menu arrays.
 
 - Replace unreliable synthetic shortcut injection with native menu, Spotlight and CleanShot actions. Remove cross-machine clock comparisons; expire accepted requests using host-local time.
