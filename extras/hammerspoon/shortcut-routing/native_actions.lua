@@ -11,6 +11,8 @@ local function locate(items,key,path,found)
   if item.AXTitle and item.AXTitle~='' then nextPath[#nextPath+1]=item.AXTitle end
   if matches(item,key) and item.AXEnabled~=false and item.AXEnabled~=0 then found[#found+1]=nextPath end
   locate(item.AXChildren,key,nextPath,found)
+  -- AXMenu wrappers are represented as anonymous arrays, not AXChildren nodes.
+  if item[1] then locate(item,key,path,found) end
  end
 end
 function M.run(action,app,windowId,done)
@@ -27,7 +29,13 @@ function M.run(action,app,windowId,done)
   if front and front:bundleID()=='com.apple.Spotlight' then
    done(front:hide() and 'spotlight-hidden' or 'spotlight-hide-failed')
   else
-   done(hs.application.launchOrFocusByBundleID('com.apple.Spotlight') and 'spotlight-opened' or 'spotlight-open-failed')
+   local task
+   task=hs.task.new('/usr/bin/open',function(code)
+    M.tasks[task]=nil;done(code==0 and 'spotlight-open-requested' or 'spotlight-open-failed')
+   end,{'-a','/System/Library/CoreServices/Spotlight.app'})
+   if not task then done('task-unavailable');return end
+   M.tasks[task]=true
+   if not task:start() then M.tasks[task]=nil;done('spotlight-open-failed') end
   end
  elseif action=='CLOSE_WINDOW' or action=='QUIT_APP' then
   if not app then done('no-target');return end
